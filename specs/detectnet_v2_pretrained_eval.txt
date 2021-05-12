@@ -4,23 +4,27 @@ dataset_config {
     tfrecords_path: "/workspace/tlt-experiments/data/tfrecords/kitti_trainval/*"
     image_directory_path: "/workspace/tlt-experiments/data/training"
   }
-  image_extension: "png"
+  image_extension: "jpg"
   target_class_mapping {
     key: "car"
     value: "car"
   }
   target_class_mapping {
-    key: "cyclist"
-    value: "cyclist"
+    key: "bicycle"
+    value: "bicycle"
   }
   target_class_mapping {
-    key: "pedestrian"
-    value: "pedestrian"
+    key: "person"
+    value: "person"
   }
   target_class_mapping {
     key: "person_sitting"
-    value: "pedestrian"
+    value: "person"
   }
+  target_class_mapping {
+    key: "road_sign"
+    value: "road_sign"
+  }	
   target_class_mapping {
     key: "van"
     value: "car"
@@ -29,16 +33,18 @@ dataset_config {
 }
 augmentation_config {
   preprocessing {
-    output_image_width: 1248
-    output_image_height: 384
+    output_image_width: 960
+ 	output_image_height: 544
+ 	crop_right: 960
+ 	crop_bottom: 544
     min_bbox_width: 1.0
     min_bbox_height: 1.0
     output_image_channel: 3
   }
   spatial_augmentation {
     hflip_probability: 0.5
-    zoom_min: 1.0
-    zoom_max: 1.0
+    zoom_min: 0.3
+    zoom_max: 2.8
     translate_max_x: 8.0
     translate_max_y: 8.0
   }
@@ -64,7 +70,7 @@ postprocessing_config {
     }
   }
   target_class_config {
-    key: "cyclist"
+    key: "bicycle"
     value {
       clustering_config {
         clustering_algorithm: DBSCAN
@@ -77,7 +83,7 @@ postprocessing_config {
     }
   }
   target_class_config {
-    key: "pedestrian"
+    key: "person"
     value {
       clustering_config {
         clustering_algorithm: DBSCAN
@@ -89,9 +95,23 @@ postprocessing_config {
       }
     }
   }
+  target_class_config {
+    key: "road_sign"
+    value {
+      clustering_config {
+        clustering_algorithm: DBSCAN
+        dbscan_confidence_threshold: 0.9
+        coverage_threshold: 0.00499999988824
+        dbscan_eps: 0.20000000298
+        dbscan_min_samples: 0.0500000007451
+        minimum_bounding_box_height: 20
+      }
+    }
+  }	
 }
+
 model_config {
-  pretrained_model_file: "/workspace/tlt-experiments/detectnet_v2/pretrained_resnet18/tlt_pretrained_detectnet_v2_vresnet18/resnet18.hdf5"
+  pretrained_model_file: "/workspace/tlt-experiments/detectnet_v2/pretrained_trafficcamnet_Ucit/tlt_trafficcamnet_unpruned_v1.0/resnet18_trafficcamnet.tlt"
   num_layers: 18
   use_batch_norm: true
   objective_set {
@@ -106,20 +126,25 @@ model_config {
     backend_floatx: FLOAT32
   }
   arch: "resnet"
+  all_projections:true
 }
 evaluation_config {
   validation_period_during_training: 3
-  first_validation_epoch: 30
+  first_validation_epoch: 1
   minimum_detection_ground_truth_overlap {
     key: "car"
     value: 0.699999988079
   }
   minimum_detection_ground_truth_overlap {
-    key: "cyclist"
-    value: 0.5
+    key: "bicycle"
+    value: 0.6
   }
   minimum_detection_ground_truth_overlap {
-    key: "pedestrian"
+    key: "person"
+    value: 0.699999988000
+  }
+   minimum_detection_ground_truth_overlap {
+    key: "road_sign"
     value: 0.5
   }
   evaluation_box_config {
@@ -132,7 +157,7 @@ evaluation_config {
     }
   }
   evaluation_box_config {
-    key: "cyclist"
+    key: "bicycle"
     value {
       minimum_height: 20
       maximum_height: 9999
@@ -141,7 +166,16 @@ evaluation_config {
     }
   }
   evaluation_box_config {
-    key: "pedestrian"
+    key: "person"
+    value {
+      minimum_height: 20
+      maximum_height: 9999
+      minimum_width: 10
+      maximum_width: 9999
+    }
+  }
+ evaluation_box_config {
+    key: "road_sign"
     value {
       minimum_height: 20
       maximum_height: 9999
@@ -168,7 +202,7 @@ cost_function_config {
     }
   }
   target_classes {
-    name: "cyclist"
+    name: "bicycle"
     class_weight: 8.0
     coverage_foreground_weight: 0.0500000007451
     objectives {
@@ -183,7 +217,7 @@ cost_function_config {
     }
   }
   target_classes {
-    name: "pedestrian"
+    name: "person"
     class_weight: 4.0
     coverage_foreground_weight: 0.0500000007451
     objectives {
@@ -197,12 +231,27 @@ cost_function_config {
       weight_target: 10.0
     }
   }
+  target_classes {
+    name: "road_sign"
+    class_weight: 2.0
+    coverage_foreground_weight: 0.0500000007451
+    objectives {
+      name: "cov"
+      initial_weight: 1.0
+      weight_target: 1.0
+    }
+    objectives {
+      name: "bbox"
+      initial_weight: 10.0
+      weight_target: 10.0
+    }
+  }	
   enable_autoweighting: true
   max_objective_weight: 0.999899983406
   min_objective_weight: 9.99999974738e-05
 }
 training_config {
-  batch_size_per_gpu: 4
+  batch_size_per_gpu: 40
   num_epochs: 120
   learning_rate {
     soft_start_annealing_schedule {
@@ -228,7 +277,7 @@ training_config {
     increment: 0.005
     decrement: 1.0
   }
-  checkpoint_interval: 10
+  checkpoint_interval: 3
 }
 bbox_rasterizer_config {
   target_class_config {
@@ -242,7 +291,7 @@ bbox_rasterizer_config {
     }
   }
   target_class_config {
-    key: "cyclist"
+    key: "bicycle"
     value {
       cov_center_x: 0.5
       cov_center_y: 0.5
@@ -252,7 +301,17 @@ bbox_rasterizer_config {
     }
   }
   target_class_config {
-    key: "pedestrian"
+    key: "person"
+    value {
+      cov_center_x: 0.5
+      cov_center_y: 0.5
+      cov_radius_x: 1.0
+      cov_radius_y: 1.0
+      bbox_min_radius: 1.0
+    }
+  }
+ target_class_config {
+    key: "road_sign"
     value {
       cov_center_x: 0.5
       cov_center_y: 0.5

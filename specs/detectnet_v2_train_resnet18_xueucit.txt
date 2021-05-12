@@ -4,33 +4,33 @@ dataset_config {
     tfrecords_path: "/workspace/tlt-experiments/data/tfrecords/kitti_trainval/*"
     image_directory_path: "/workspace/tlt-experiments/data/training"
   }
-  image_extension: "png"
+  image_extension: "jpg"
   target_class_mapping {
     key: "car"
     value: "car"
   }
   target_class_mapping {
-    key: "cyclist"
-    value: "cyclist"
+    key: "bicycle"
+    value: "bicycle"
   }
   target_class_mapping {
-    key: "pedestrian"
-    value: "pedestrian"
+    key: "person"
+    value: "person"
   }
   target_class_mapping {
     key: "person_sitting"
-    value: "pedestrian"
+    value: "person"
   }
   target_class_mapping {
-    key: "van"
+    key: "bus"
     value: "car"
   }
   validation_fold: 0
 }
 augmentation_config {
   preprocessing {
-    output_image_width: 1248
-    output_image_height: 384
+    output_image_width: 960
+    output_image_height: 544
     min_bbox_width: 1.0
     min_bbox_height: 1.0
     output_image_channel: 3
@@ -64,7 +64,7 @@ postprocessing_config {
     }
   }
   target_class_config {
-    key: "cyclist"
+    key: "bicycle"
     value {
       clustering_config {
         clustering_algorithm: DBSCAN
@@ -77,7 +77,7 @@ postprocessing_config {
     }
   }
   target_class_config {
-    key: "pedestrian"
+    key: "person"
     value {
       clustering_config {
         clustering_algorithm: DBSCAN
@@ -91,7 +91,7 @@ postprocessing_config {
   }
 }
 model_config {
-  pretrained_model_file: "/workspace/tlt-experiments/detectnet_v2/pretrained_resnet18/tlt_pretrained_detectnet_v2_vresnet18/resnet18.hdf5"
+  pretrained_model_file: "/workspace/tlt-experiments/detectnet_v2/pretrained_trafficcamnet_Ucit/tlt_trafficcamnet_unpruned_v1.0/resnet18_trafficcamnet.tlt"
   num_layers: 18
   use_batch_norm: true
   objective_set {
@@ -108,18 +108,18 @@ model_config {
   arch: "resnet"
 }
 evaluation_config {
-  validation_period_during_training: 3
-  first_validation_epoch: 30
+  validation_period_during_training: 10
+  first_validation_epoch: 2
   minimum_detection_ground_truth_overlap {
     key: "car"
     value: 0.699999988079
   }
   minimum_detection_ground_truth_overlap {
-    key: "cyclist"
+    key: "bicycle"
     value: 0.5
   }
   minimum_detection_ground_truth_overlap {
-    key: "pedestrian"
+    key: "person"
     value: 0.5
   }
   evaluation_box_config {
@@ -132,7 +132,7 @@ evaluation_config {
     }
   }
   evaluation_box_config {
-    key: "cyclist"
+    key: "bicycle"
     value {
       minimum_height: 20
       maximum_height: 9999
@@ -141,7 +141,7 @@ evaluation_config {
     }
   }
   evaluation_box_config {
-    key: "pedestrian"
+    key: "person"
     value {
       minimum_height: 20
       maximum_height: 9999
@@ -168,7 +168,7 @@ cost_function_config {
     }
   }
   target_classes {
-    name: "cyclist"
+    name: "bicycle"
     class_weight: 8.0
     coverage_foreground_weight: 0.0500000007451
     objectives {
@@ -183,7 +183,7 @@ cost_function_config {
     }
   }
   target_classes {
-    name: "pedestrian"
+    name: "person"
     class_weight: 4.0
     coverage_foreground_weight: 0.0500000007451
     objectives {
@@ -196,13 +196,13 @@ cost_function_config {
       initial_weight: 10.0
       weight_target: 10.0
     }
-  }
+  }	
   enable_autoweighting: true
   max_objective_weight: 0.999899983406
   min_objective_weight: 9.99999974738e-05
 }
 training_config {
-  batch_size_per_gpu: 4
+  batch_size_per_gpu: 32
   num_epochs: 120
   learning_rate {
     soft_start_annealing_schedule {
@@ -228,7 +228,7 @@ training_config {
     increment: 0.005
     decrement: 1.0
   }
-  checkpoint_interval: 10
+  checkpoint_interval: 5
 }
 bbox_rasterizer_config {
   target_class_config {
@@ -242,7 +242,7 @@ bbox_rasterizer_config {
     }
   }
   target_class_config {
-    key: "cyclist"
+    key: "bicycle"
     value {
       cov_center_x: 0.5
       cov_center_y: 0.5
@@ -252,7 +252,7 @@ bbox_rasterizer_config {
     }
   }
   target_class_config {
-    key: "pedestrian"
+    key: "person"
     value {
       cov_center_x: 0.5
       cov_center_y: 0.5
